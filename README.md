@@ -1,0 +1,1 @@
+Farmapalabra con modo competición

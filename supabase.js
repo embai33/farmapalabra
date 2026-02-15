@@ -19,8 +19,10 @@ function initSupabase() {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             console.log('Supabase inicializado correctamente');
 
-            // Cargar jugador guardado en localStorage
-            loadSavedPlayer();
+            // Limpiar sesión anterior al cargar la aplicación
+            currentPlayer = null;
+            localStorage.removeItem('farmapalabra_player');
+            updatePlayerUI();
 
             return true;
         } else {

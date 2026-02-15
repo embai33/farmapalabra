@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FarmaPalabra: Trasplante</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Juego educativo sobre terminología de trasplantes para pacientes del Hospital La Fe">
+    <meta name="theme-color" content="#3498db">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="FarmaPalabra">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+
+    <!-- Iconos para iOS -->
+    <link rel="apple-touch-icon" href="./icons/icon-152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-192.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-72.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./icons/icon-72.png">
+
+    <!-- CSS externo -->
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Pantalla de inicio con selección de dificultad -->
+        <div id="startScreen">
+            <header>
+                <h1>FarmaPalabra Trasplante</h1>
+                <h2>Servicio de Farmacia. Hospital U.P. La Fe</h2>
+                <button class="info-btn" onclick="openInfoModal()" title="Acerca de">ℹ</button>
+            </header>
+
+            <div class="start-content">
+                <div class="center-image start-logo">
+                    <img src="Logo-La-Fe.jpg" alt="Logo Hospital La Fe" id="startLogo">
+                </div>
+
+                <div class="instructions">
+                    <h3>Instrucciones</h3>
+                    <p>Adivina las palabras relacionadas con el trasplante a partir de sus definiciones.</p>
+                    <ul>
+                        <li><strong>Responder:</strong> Escribe tu respuesta y pulsa Enter o el botón</li>
+                        <li><strong>Pasapalabra:</strong> Salta a la siguiente letra (penaliza -1 punto)</li>
+                        <li><strong>Pistas:</strong> Te dan la primera letra y longitud de la palabra</li>
+                    </ul>
+                    <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                        <em>Nota: No te preocupes por los acentos al escribir las respuestas.</em>
+                    </p>
+                </div>
+
+                <div class="player-name-input">
+                    <label for="playerName">Tu nombre (opcional)</label>
+                    <input type="text" id="playerName" placeholder="Introduce tu nombre" maxlength="30" autocomplete="off">
+                </div>
+
+                <div class="difficulty-selector">
+                    <h3>Selecciona la dificultad</h3>
+                    <div class="difficulty-options">
+                        <button class="difficulty-btn" data-difficulty="facil" onclick="selectDifficulty('facil')">
+                            <span class="diff-name">Fácil</span>
+                            <span class="diff-desc">7 minutos, 5 pistas</span>
+                        </button>
+                        <button class="difficulty-btn selected" data-difficulty="normal" onclick="selectDifficulty('normal')">
+                            <span class="diff-name">Normal</span>
+                            <span class="diff-desc">5 minutos, 3 pistas</span>
+                        </button>
+                        <button class="difficulty-btn" data-difficulty="dificil" onclick="selectDifficulty('dificil')">
+                            <span class="diff-name">Difícil</span>
+                            <span class="diff-desc">3 minutos, sin pistas</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sound-toggle-container">
+                    <label class="sound-toggle">
+                        <input type="checkbox" id="soundEnabled" checked>
+                        <span class="sound-toggle-label">Sonidos activados</span>
+                    </label>
+                </div>
+
+                <!-- Estado del jugador y botones de ranking -->
+                <div class="player-section">
+                    <h4 class="section-title">Modo Competición</h4>
+                    <div id="playerStatus" class="player-status" style="display: none;"></div>
+                    <div class="player-buttons">
+                        <button id="loginBtn" class="secondary-btn" onclick="showAuthModal('register')">Guardar resultado</button>
+                        <button id="rankingBtn" class="secondary-btn" onclick="showRankingModal()">🏆 Ranking</button>
+                    </div>
+                </div>
+
+                <button class="start-btn" onclick="startGame()">Comenzar Juego</button>
+            </div>
+        </div>
+
+        <!-- Pantalla del juego (oculta inicialmente) -->
+        <div id="gameScreen" style="display: none;">
+            <header>
+                <h1>FarmaPalabra Trasplante</h1>
+                <h2>Servicio de Farmacia. Hospital U.P. La Fe</h2>
+            </header>
+
+            <div class="game-stats">
+                <div id="playerDisplay" class="player-display"></div>
+                <div id="difficultyBadge" class="difficulty-badge">Normal</div>
+                <div id="timer">05:00</div>
+            </div>
+
+            <!-- Indicador de progreso -->
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text">
+                    <span>Progreso: <span id="progressCount">0</span>/<span id="progressTotal">21</span> letras</span>
+                </div>
+            </div>
+
+            <div class="rosco-container">
+                <div class="current-letter" id="currentLetterDisplay">A</div>
+                <div class="center-image"><img src="Logo-La-Fe.jpg" alt="Logo" id="centerLogo"></div>
+                <div class="rosco" id="rosco"></div>
+            </div>
+
+            <div class="game-info">
+                <p id="definition"></p>
+            </div>
+
+            <div id="score">
+                <span>Correctas: <span id="correctCount" class="score-value correct-score">0</span></span> |
+                <span>Incorrectas: <span id="incorrectCount" class="score-value incorrect-score">0</span></span>
+            </div>
+
+            <div id="points">
+                <span>Puntuación: <span id="pointsCount" class="points-value">0</span></span>
+            </div>
+
+            <div class="input-container">
+                <input type="text" id="answer" placeholder="Tu respuesta" autocomplete="off">
+            </div>
+
+            <div class="btn-container">
+                <button class="primary" onclick="checkAnswer()">Responder</button>
+                <button onclick="pasapalabra()">Pasapalabra</button>
+                <button class="success" onclick="newRosco()">Nuevo rosco</button>
+            </div>
+
+            <div id="finalScore"></div>
+            <button id="viewResults" class="primary" style="display: none;" onclick="showResults()">Ver resultados</button>
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <!-- Modal de Registro/Login -->
+    <div id="authModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content auth-modal">
+            <button class="modal-close" onclick="closeAuthModal()">&times;</button>
+
+            <h2>Guardar tu récord</h2>
+            <p class="modal-subtitle">Crea un alias para aparecer en el ranking</p>
+
+            <!-- Tabs -->
+            <div class="auth-tabs">
+                <button id="registerTab" class="auth-tab active" onclick="showAuthModal('register')">Nuevo jugador</button>
+                <button id="loginTab" class="auth-tab" onclick="showAuthModal('login')">Ya tengo alias</button>
+            </div>
+
+            <!-- Mensaje de error -->
+            <div id="authError" class="auth-error" style="display: none;"></div>
+
+            <!-- Formulario de registro -->
+            <div id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <label for="registerAlias">Elige tu alias</label>
+                    <input type="text" id="registerAlias" placeholder="Ej: Jugador123" maxlength="15" autocomplete="off">
+                    <span class="form-hint">Solo letras, números y guiones bajos (3-15 caracteres)</span>
+                </div>
+
+                <div id="pinDisplay" class="pin-display" style="display: none;">
+                    <p>Tu código secreto:</p>
+                    <div id="pinValue" class="pin-value"></div>
+                    <p class="pin-warning">⚠️ Guárdalo para recuperar tu perfil</p>
+                </div>
+
+                <button id="registerBtn" class="primary auth-submit" onclick="handleRegister()">Crear perfil</button>
+            </div>
+
+            <!-- Formulario de login -->
+            <div id="loginForm" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label for="loginAlias">Tu alias</label>
+                    <input type="text" id="loginAlias" placeholder="Tu alias" maxlength="15" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPin">Tu código secreto</label>
+                    <input type="text" id="loginPin" placeholder="4 dígitos" maxlength="4" autocomplete="off" inputmode="numeric">
+                </div>
+
+                <button id="loginSubmitBtn" class="primary auth-submit" onclick="handleLogin()">Entrar</button>
+            </div>
+
+            <p class="auth-privacy">🔒 No guardamos ningún dato personal. Solo tu alias y puntuaciones.</p>
+        </div>
+    </div>
+
+    <!-- Modal de Ranking -->
+    <div id="rankingModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content ranking-modal">
+            <button class="modal-close" onclick="closeRankingModal()">&times;</button>
+
+            <h2>🏆 Ranking</h2>
+            <p class="modal-subtitle">Clasificación por puntuación total acumulada</p>
+
+            <div id="rankingList" class="ranking-list">
+                <div class="ranking-loading">Cargando ranking...</div>
+            </div>
+
+            <button class="primary" onclick="closeRankingModal()" style="margin-top: 20px;">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal de información -->
+    <div id="infoModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeInfoModal()">&times;</button>
+
+            <h2>FarmaPalabra: Trasplante</h2>
+            <p class="modal-subtitle">Juego educativo del Servicio de Farmacia del Hospital Universitario y Politécnico La Fe</p>
+
+            <div class="modal-section">
+                <h3>Descripción</h3>
+                <p>FarmaPalabra es un juego educativo inspirado en el popular concurso "Pasapalabra". Su objetivo es ayudar a los pacientes trasplantados a familiarizarse con la terminología médica relacionada con su tratamiento y cuidados post-trasplante.</p>
+                <p>A través de definiciones sencillas, el jugador debe adivinar palabras que comienzan o contienen cada letra del abecedario, aprendiendo de forma amena conceptos importantes sobre medicamentos, procedimientos y cuidados.</p>
+            </div>
+
+            <div class="modal-section">
+                <h3>Cómo jugar</h3>
+                <ul>
+                    <li><strong>Objetivo:</strong> Adivinar todas las palabras del rosco antes de que se acabe el tiempo.</li>
+                    <li><strong>Responder:</strong> Escribe tu respuesta en el campo de texto y pulsa Enter o el botón "Responder".</li>
+                    <li><strong>Pasapalabra:</strong> Si no conoces la respuesta, pulsa "Pasapalabra" para pasar a la siguiente letra. Volverás a ella más tarde, pero perderás 1 punto.</li>
+                    <li><strong>Pistas:</strong> En los niveles Fácil y Normal dispones de pistas que te muestran la primera letra y la longitud de la palabra.</li>
+                    <li><strong>Acentos:</strong> No te preocupes por los acentos, el juego los ignora al comparar las respuestas.</li>
+                </ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>Puntuación</h3>
+                <ul>
+                    <li>Respuesta correcta: <strong>+3 puntos</strong></li>
+                    <li>Respuesta incorrecta: <strong>-2 puntos</strong></li>
+                    <li>Pasapalabra: <strong>-1 punto</strong></li>
+                    <li>Bonificación por tiempo restante</li>
+                    <li>Bonificación por nivel de dificultad (Normal: +2, Difícil: +5)</li>
+                </ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>Niveles de dificultad</h3>
+                <ul>
+                    <li><strong>Fácil:</strong> 7 minutos de tiempo, 5 pistas disponibles</li>
+                    <li><strong>Normal:</strong> 5 minutos de tiempo, 3 pistas disponibles</li>
+                    <li><strong>Difícil:</strong> 3 minutos de tiempo, sin pistas</li>
+                </ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>Modos de juego</h3>
+                <ul>
+                    <li><strong>Modo Práctica:</strong> Juega libremente sin registrarte. Ideal para aprender y familiarizarte con los términos médicos. Tus puntuaciones no se guardan.</li>
+                    <li><strong>Modo Competición:</strong> Crea un alias anónimo para guardar tus resultados y competir en el ranking. Tus puntuaciones se acumulan y puedes compararte con otros jugadores. No se requiere ningún dato personal, solo un alias y un código de 4 dígitos.</li>
+                </ul>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                    Para activar el Modo Competición, pulsa "Guardar resultado" en la pantalla de inicio.
+                </p>
+            </div>
+
+            <div class="modal-section modal-credits">
+                <h3>Créditos</h3>
+                <p>Desarrollado por <a href="https://www.linkedin.com/in/emilio-monte-boquet" target="_blank" rel="noopener noreferrer">Emilio Monte Boquet</a></p>
+                <p class="modal-hospital">Servicio de Farmacia · Hospital Universitario y Politécnico La Fe · Valencia</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Librería para generar PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- JavaScript externo -->
+    <script src="./supabase.js"></script>
+    <script src="./game.js"></script>
+</body>
+</html>

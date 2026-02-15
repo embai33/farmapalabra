@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fondo circular -->
+  <circle cx="256" cy="256" r="250" fill="#3498db"/>
+
+  <!-- Borde del rosco exterior -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#ecf0f1" stroke-width="30"/>
+
+  <!-- Letras del rosco simuladas -->
+  <circle cx="256" cy="80" r="25" fill="#2ecc71"/>
+  <circle cx="340" cy="100" r="25" fill="#ecf0f1"/>
+  <circle cx="400" cy="160" r="25" fill="#ecf0f1"/>
+  <circle cx="430" cy="240" r="25" fill="#e74c3c"/>
+  <circle cx="420" cy="320" r="25" fill="#ecf0f1"/>
+  <circle cx="370" cy="390" r="25" fill="#2ecc71"/>
+  <circle cx="300" cy="430" r="25" fill="#ecf0f1"/>
+  <circle cx="212" cy="430" r="25" fill="#2ecc71"/>
+  <circle cx="142" cy="390" r="25" fill="#ecf0f1"/>
+  <circle cx="92" cy="320" r="25" fill="#ecf0f1"/>
+  <circle cx="82" cy="240" r="25" fill="#2ecc71"/>
+  <circle cx="112" cy="160" r="25" fill="#ecf0f1"/>
+  <circle cx="172" cy="100" r="25" fill="#e74c3c"/>
+
+  <!-- Centro con F de FarmaPalabra -->
+  <circle cx="256" cy="256" r="80" fill="#ffffff"/>
+  <text x="256" y="285" text-anchor="middle" font-family="Arial, sans-serif" font-size="100" font-weight="bold" fill="#2c3e50">F</text>
+</svg>

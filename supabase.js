@@ -10,6 +10,7 @@ let supabaseClient = null;
 
 // Jugador actual en sesión
 let currentPlayer = null;
+let currentPinHash = null;
 
 // Inicializar Supabase
 function initSupabase() {
@@ -21,6 +22,7 @@ function initSupabase() {
 
             // Limpiar sesión anterior al cargar la aplicación
             currentPlayer = null;
+            currentPinHash = null;
             localStorage.removeItem('farmapalabra_player');
             updatePlayerUI();
 
@@ -104,6 +106,7 @@ async function registerPlayer(alias) {
 
     // Guardar en sesión y localStorage
     currentPlayer = data;
+    currentPinHash = pinHash;
     savePlayerToStorage(data.id, aliasLower, pin);
 
     return { success: true, player: data, pin: pin };
@@ -131,6 +134,7 @@ async function loginPlayer(alias, pin) {
 
     // Guardar en sesión y localStorage
     currentPlayer = data;
+    currentPinHash = pinHash;
     savePlayerToStorage(data.id, aliasLower, pin);
 
     return { success: true, player: data };
@@ -167,6 +171,7 @@ async function loadSavedPlayer() {
 // Cerrar sesión
 function logoutPlayer() {
     currentPlayer = null;
+    currentPinHash = null;
     localStorage.removeItem('farmapalabra_player');
     updatePlayerUI();
 }
@@ -175,55 +180,40 @@ function logoutPlayer() {
 // GESTIÓN DE RESULTADOS
 // =============================================
 
-// Guardar resultado de partida
+// Guardar resultado de partida (mediante función RPC segura)
 async function saveGameResult(score, correctAnswers, incorrectAnswers, pasapalabraCount, difficulty, timeUsed) {
-    if (!supabaseClient || !currentPlayer) {
+    if (!supabaseClient || !currentPlayer || !currentPinHash) {
         return { success: false, error: 'No hay jugador conectado' };
     }
 
-    // Insertar resultado
-    const { data: gameResult, error: gameError } = await supabaseClient
-        .from('game_results')
-        .insert([{
-            player_id: currentPlayer.id,
-            score: score,
-            correct_answers: correctAnswers,
-            incorrect_answers: incorrectAnswers,
-            pasapalabra_count: pasapalabraCount,
-            difficulty: difficulty,
-            time_used: timeUsed
-        }])
-        .select()
-        .single();
+    // Llamar a la función RPC segura del servidor
+    const { data, error } = await supabaseClient
+        .rpc('save_game_result', {
+            p_player_id: currentPlayer.id,
+            p_pin_hash: currentPinHash,
+            p_score: score,
+            p_correct_answers: correctAnswers,
+            p_incorrect_answers: incorrectAnswers,
+            p_pasapalabra_count: pasapalabraCount,
+            p_difficulty: difficulty,
+            p_time_used: timeUsed
+        });
 
-    if (gameError) {
-        console.error('Error al guardar resultado:', gameError);
+    if (error) {
+        console.error('Error al guardar resultado:', error);
         return { success: false, error: 'Error al guardar el resultado' };
     }
 
-    // Actualizar estadísticas del jugador
-    const newTotalPoints = currentPlayer.total_points + score;
-    const newGamesPlayed = currentPlayer.games_played + 1;
-    const newBestScore = Math.max(currentPlayer.best_score, score);
-
-    const { data: updatedPlayer, error: updateError } = await supabaseClient
-        .from('players')
-        .update({
-            total_points: newTotalPoints,
-            games_played: newGamesPlayed,
-            best_score: newBestScore
-        })
-        .eq('id', currentPlayer.id)
-        .select()
-        .single();
-
-    if (updateError) {
-        console.error('Error al actualizar estadísticas:', updateError);
-    } else {
-        currentPlayer = updatedPlayer;
+    if (!data.success) {
+        return { success: false, error: data.error };
     }
 
-    return { success: true, gameResult: gameResult, player: updatedPlayer };
+    // Actualizar datos locales del jugador
+    currentPlayer.total_points = data.total_points;
+    currentPlayer.games_played = data.games_played;
+    currentPlayer.best_score = data.best_score;
+
+    return { success: true, player: currentPlayer };
 }
 
 // =============================================
